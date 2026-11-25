@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="지역별 주유소 자료를 추출하고 오프라인 지도에서 판매가격을 조회합니다.">
+  <title>주유소 지도 · 지역별 판매가격</title>
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="./data.js"></script>
+  <script defer src="./map.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <header class="topbar"><div class="frame brand-row">
+    <a class="brand" href="#home"><span class="brand-icon" aria-hidden="true"><span></span></span>주유소 지도</a>
+    <span class="offline">오프라인 실행</span>
+  </div></header>
+  <main id="main">
+    <section id="home" aria-labelledby="home-title">
+      <div class="frame home-hero">
+        <div class="home-title">
+          <h1 id="home-title" tabindex="-1">지역별 주유소와 판매가격</h1>
+          <p>원하는 지역의 CSV를 저장하거나, 지도에서 주유소별 가격을 확인하세요.</p>
+        </div>
+        <img class="hero-map" src="./home-map.webp" alt="" width="900" height="600">
+      </div>
+      <div class="menu-band">
+        <nav class="frame menu-grid" aria-label="메인 메뉴">
+          <a href="#extract" class="menu-card extract-card">
+            <span class="feature-icon file-icon" aria-hidden="true"><span></span></span>
+            <h2>지역 자료 추출</h2>
+            <p>시·도와 시·군·구를 골라 주유소 자료와 판매가격을 각각 CSV로 저장합니다.</p>
+            <span class="card-action">자료 추출 열기</span>
+          </a>
+          <a href="#map" class="menu-card map-card">
+            <span class="feature-icon pin-icon" aria-hidden="true"><span></span></span>
+            <h2>지도·가격 조회</h2>
+            <p>지도에서 주유소를 선택해 날짜별로 휘발유, 경유, 등유 가격을 확인합니다.</p>
+            <span class="card-action">지도 조회 열기</span>
+          </a>
+        </nav>
+      </div>
+    </section>
+    <section class="frame" id="workspace" aria-labelledby="workspace-title" hidden>
+      <div class="workspace-title">
+        <a class="back" href="#home">메인으로 돌아가기</a>
+        <h1 id="workspace-title" tabindex="-1"></h1>
+        <p id="workspace-description"></p>
+      </div>
+      <section class="panel inputs" aria-labelledby="files-title">
+        <h2 id="files-title">CSV 파일</h2>
+        <div class="file-grid">
+          <div class="file-box">
+            <label for="station-file">주유소 표준 CSV</label>
+            <div class="file-picker">
+              <input id="station-file" type="file" accept=".csv,text/csv" aria-describedby="station-status">
+              <span aria-hidden="true">파일 선택</span>
+            </div>
+            <p id="station-status" class="file-status" role="status">주유소 위치 자료를 선택하세요.</p>
+          </div>
+          <div class="file-box">
+            <label for="price-file">판매가격 CSV</label>
+            <div class="file-picker">
+              <input id="price-file" type="file" accept=".csv,text/csv" aria-describedby="price-status">
+              <span aria-hidden="true">파일 선택</span>
+            </div>
+            <p id="price-status" class="file-status" role="status">날짜별 판매가격 자료를 선택하세요.</p>
+          </div>
+        </div>
+      </section>
+      <section class="panel region" aria-labelledby="region-title">
+        <h2 id="region-title">조회 지역</h2>
+        <div class="region-grid">
+          <label>시·도<select id="province" disabled><option value="">시·도 선택</option></select></label>
+          <label>시·군·구<select id="district" disabled><option value="">전체</option></select></label>
+        </div>
+        <p id="region-status" class="file-status" role="status"></p>
+      </section>
+      <section id="extract-results" class="panel" aria-labelledby="extract-title" hidden>
+        <h2 id="extract-title">추출 결과</h2>
+        <div class="result-grid">
+          <div class="result-box"><span>주유소</span><strong id="station-count">—</strong><button id="save-station" type="button" disabled>주유소 CSV 저장</button></div>
+          <div class="result-box"><span>판매가격 기록</span><strong id="price-count">—</strong><button id="save-price" type="button" disabled>판매가격 CSV 저장</button></div>
+        </div>
+        <p class="file-status" id="export-status" role="status"></p>
+      </section>
+      <section id="map-results" hidden aria-labelledby="map-title">
+        <div class="panel map-panel">
+          <div class="map-header"><h2 id="map-title">지역 지도</h2><p id="map-status" class="file-status" role="status"></p></div>
+          <div class="map-view" id="map-view" hidden>
+            <canvas id="boundaries" aria-label="지역 행정동 경계와 주유소 위치. 주유소 목록에서도 가격을 열 수 있습니다."></canvas>
+            <div class="map-controls" aria-label="지도 조작">
+              <button type="button" id="zoom-in" aria-label="지도 확대">+</button>
+              <button type="button" id="zoom-out" aria-label="지도 축소">−</button>
+              <button type="button" id="map-reset">초기 위치</button>
+            </div>
+            <div class="legend">
+              <span><i class="legend-marker" aria-hidden="true"></i>주유소</span>
+              <span><i class="legend-marker selected-marker" aria-hidden="true"></i>선택한 주유소</span>
+            </div>
+          </div>
+        </div>
+        <div class="map-details">
+          <section class="panel list-panel" aria-labelledby="list-title">
+            <h2 id="list-title">주유소 목록</h2>
+            <label class="search-label" for="station-search">이름 또는 주소로 찾기</label>
+            <input type="search" id="station-search" placeholder="주유소 검색" disabled>
+            <p id="list-status" class="file-status" role="status"></p>
+            <ul id="station-list"></ul>
+            <div class="pagination" id="pagination" hidden><button type="button" id="previous-page">이전</button><span id="list-page"></span><button type="button" id="next-page">다음</button></div>
+          </section>
+          <section class="panel price-panel" aria-labelledby="detail-title">
+            <h2 id="detail-title">판매가격</h2>
+            <div id="price-detail" aria-live="polite"><p>지도나 목록에서 주유소를 선택하세요.</p></div>
+          </section>
+        </div>
+      </section>
+    </section>
+  </main>
+</body>
+</html>
